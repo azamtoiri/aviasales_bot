@@ -33,5 +33,6 @@ values = response.get('data')
 
 for _, price in enumerate(values):
     print(price['origin_airport'], price['destination_airport'], price['departure_at'], price['price'])
+    print('-' * 20)
 
 # print(response.get('data'))

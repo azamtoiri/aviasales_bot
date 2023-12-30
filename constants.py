@@ -38,3 +38,4 @@ def _get_config(
 
 class Settings:
     API_TOKEN = _get_config("API_TOKEN", str)
+    BOT_TOKEN = _get_config("BOT_TOKEN")
