@@ -11,14 +11,29 @@ def setup_handlers(dispatcher: Dispatcher) -> None:
     dispatcher.include_router(setup_routers())
 
 
+def setup_filters(dispatcher: Dispatcher) -> None:
+    """FILTERS"""
+    from filters import ChatPrivateFilter
+
+    dispatcher.message.filter(ChatPrivateFilter(chat_type=['private']))
+
+
+def setup_middlewares(dispatcher: Dispatcher, bot: Bot) -> None:
+    """Middlewares"""
+    from middlewears.throttling import ThrottlingMiddleware
+
+    dispatcher.message.middleware(ThrottlingMiddleware(slow_mode_delay=0.5))
+
+
 async def setup_aiogram(dispatcher: Dispatcher, bot: Bot) -> None:
     logger.info("Configuring aiogram")
     setup_handlers(dispatcher=dispatcher)
+    setup_middlewares(dispatcher=dispatcher, bot=bot)
+    setup_filters(dispatcher=dispatcher)
     logger.info("Configured aiogram")
 
 
 async def aiogram_on_startup_polling(dispatcher: Dispatcher, bot: Bot) -> None:
-    logger.info("Database connected")
     logger.info("Starting polling")
     await bot.delete_webhook(drop_pending_updates=True)
     await setup_aiogram(bot=bot, dispatcher=dispatcher)
