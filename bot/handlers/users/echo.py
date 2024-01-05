@@ -1,7 +1,7 @@
 from aiogram import F
 from aiogram import Router, types
 
-from _aiogram_v3.keyboards.inline.buttons import are_you_sure_markup
+from bot.keyboards.inline.buttons import are_you_sure_markup
 
 router = Router()
 
