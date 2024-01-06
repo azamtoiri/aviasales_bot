@@ -1,12 +1,13 @@
+import asyncio
 from typing import Optional
 
 import requests
 
 from constants import Settings
-from utils import headers, URL
+from api.utils import headers, URL
 
 
-def get_flight_prices(
+async def get_flight_prices(
         origin: str,
         destination: str,
         depart_date: str,
@@ -80,6 +81,7 @@ def get_flight_prices_generator(
     Generator for getting prices,
     :return one flight with type of tuple
     """
+    global response
     token = Settings.API_TOKEN
 
     params = {
@@ -109,17 +111,23 @@ def get_flight_prices_generator(
             yield flight_info
         print("Запрос выполнен успешно.")
     except requests.exceptions.RequestException as e:
+        print(response.status_code)
         print(f"Ошибка при выполнении запроса: {e}")
 
 
 # Пример использования функции
-flights_data = get_flight_prices("MOW", "LED", "2024-01-10")
-print(flights_data[0])
+async def main():
+    flights_data = await get_flight_prices("MOW", "LED", "2024-01-10")
+    print(flights_data)
 
-# Пример использования генератора
-flight_generator = get_flight_prices_generator("MOW", "LED", "2024-01-10")
-# print(list(flight_generator)[1])
-# for flight in flight_generator:
-#     print(flight['origin_airport'], flight['destination_airport'], flight['departure_at'], flight['price'],
-#           f"\n{flight['link']}")
-#     print('-' * 20)
+
+
+if __name__ == '__main__':
+    # asyncio.run(main())
+
+    # Пример использования генератора
+    flight_generator = get_flight_prices_generator("MOW", "LED", "2024-01-10")
+    for flight in flight_generator:
+        print(flight['origin_airport'], flight['destination_airport'], flight['departure_at'], flight['price'],
+              f"\n{flight['link']}")
+        print('-' * 20)

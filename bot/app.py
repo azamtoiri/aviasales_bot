@@ -19,8 +19,8 @@ def setup_filters(dispatcher: Dispatcher) -> None:
 
 
 def setup_middlewares(dispatcher: Dispatcher, bot: Bot) -> None:
-    """Middlewares"""
-    from middlewears.throttling import ThrottlingMiddleware
+    """MIDDLEWARE"""
+    from middlewares.throttling import ThrottlingMiddleware
 
     dispatcher.message.middleware(ThrottlingMiddleware(slow_mode_delay=0.5))
 
