@@ -1,6 +1,3 @@
-from datetime import datetime
-from difflib import get_close_matches
-
 countries_dict_lower = {
     'италия': 'it',
     'таджикистан': 'tj',

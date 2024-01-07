@@ -1,7 +1,7 @@
 from aiogram import Router, types
 from aiogram.filters.command import CommandStart
 
-from bot.keyboards.reply.start_buttons import ask_user
+from keyboards.reply.start_buttons import ask_user
 
 router = Router()
 

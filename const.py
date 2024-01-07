@@ -2,7 +2,6 @@ from typing import cast, TypeVar, NewType, overload, Union, Callable, Optional
 
 from decouple import config
 
-
 T = TypeVar("T")
 V = TypeVar("V")
 Sentinel = NewType("Sentinel", object)

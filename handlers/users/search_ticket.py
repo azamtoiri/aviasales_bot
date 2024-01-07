@@ -4,9 +4,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardRemove
 
-from bot.states.flight import FlightForm
-from bot.utils.misc.utils import origin_codes
-from bot.utils.misc.validate import NoMatchCountryError, DateError, validate_country, validate_date
+from states.flight import FlightForm
+from utils.misc.utils import origin_codes
+from utils.misc.validate import NoMatchCountryError, DateError, validate_country, validate_date
 
 router = Router()
 
@@ -61,13 +61,12 @@ async def airport_destination(msg: Message, state: FSMContext):
 @router.message(FlightForm.depart_date)
 async def show_tickets(msg: Message, state: FSMContext):
     from api.main import get_flight_prices
-    from bot.utils.misc.validate import readable_datetime, convert_minutes_to_hours_and_minutes
-    from bot.utils.misc.utils import reversed_origin_codes
+    from utils.misc.validate import readable_datetime, convert_minutes_to_hours_and_minutes
+    from utils.misc.utils import reversed_origin_codes
     try:
         validate_date(msg.text)
         await state.update_data(depart_date=msg.text)
         data = await state.get_data()
-        print(data)
         await state.clear()
 
         prices = await get_flight_prices(data.get('origin'), data.get('destination'), data.get('depart_date'))

@@ -3,7 +3,7 @@ from typing import Optional
 
 import requests
 
-from constants import Settings
+from const import Settings
 from api.utils import headers, URL
 
 
