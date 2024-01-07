@@ -67,13 +67,15 @@ async def show_tickets(msg: Message, state: FSMContext):
         validate_date(msg.text)
         await state.update_data(depart_date=msg.text)
         data = await state.get_data()
+        print(data)
         await state.clear()
 
         prices = await get_flight_prices(data.get('origin'), data.get('destination'), data.get('depart_date'))
         """All tickets prices"""
+        print(prices[0])
         message = [
-            f"<b>С:</b> {reversed_origin_codes.get(price[0]).upper()}\n"
-            f"<b>В:</b> {reversed_origin_codes.get(price[1]).upper()}\n"
+            f"<b>С:</b> {reversed_origin_codes.get(price[0])}\n"
+            f"<b>В:</b> {reversed_origin_codes.get(price[1])}\n"
             f"<b>Дата и время:</b> {readable_datetime(price[2])}\n"
             f"<b>Price:</b> {price[3]}₽\n"
             f"<b>Время полета:</b> {convert_minutes_to_hours_and_minutes(price[4])}\n"
