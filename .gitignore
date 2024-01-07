@@ -1,6 +1,7 @@
 ### main template
 ### main template
 ### Django ###
+.idea
 tailwindcss/
 *.json
 *.log
