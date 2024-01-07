@@ -11,7 +11,7 @@ async def get_flight_prices(
         origin: str,
         destination: str,
         depart_date: str,
-        direct: Optional[bool] = True,
+        direct: Optional[bool] = "true",
         return_date: Optional[str] = "",
         currency: Optional[str] = "rub",
         sorting: Optional[str] = "price"
@@ -51,13 +51,16 @@ async def get_flight_prices(
         values = response.json().get('data', [])
         flights_data = []
 
-        for price in values:
+        for val in values:
             flight_info = (
-                price['origin_airport'],
-                price['destination_airport'],
-                price['departure_at'],
-                price['price'],
-                price['link']
+                val['origin_airport'],  # 0
+                val['destination_airport'],  # 1
+                val['departure_at'],  # 2
+                val['price'],  # 3
+                val['duration_to'],  # 4
+                val['airline'],  # 5
+                val['flight_number'],  # 6
+                val['link']  # 7
             )
             flights_data.append(flight_info)
 
@@ -72,7 +75,7 @@ def get_flight_prices_generator(
         origin: str,
         destination: str,
         depart_date: str,
-        direct: Optional[bool] = True,
+        direct: Optional[bool] = "true",
         return_date: Optional[str] = "",
         currency: Optional[str] = "rub",
         sorting: Optional[str] = "price"
@@ -81,7 +84,6 @@ def get_flight_prices_generator(
     Generator for getting prices,
     :return one flight with type of tuple
     """
-    global response
     token = Settings.API_TOKEN
 
     params = {
@@ -106,28 +108,31 @@ def get_flight_prices_generator(
                 price['destination_airport'],
                 price['departure_at'],
                 price['price'],
+                price['duration_to'],
+                price['airline'],
+                price['flight_number '],
                 price['link']
             )
             yield flight_info
         print("Запрос выполнен успешно.")
     except requests.exceptions.RequestException as e:
-        print(response.status_code)
         print(f"Ошибка при выполнении запроса: {e}")
 
 
 # Пример использования функции
 async def main():
-    flights_data = await get_flight_prices("MOW", "LED", "2024-01-10")
-    print(flights_data)
+    flights_data = await get_flight_prices("DME", "DXB", "2024-01-10")
+    for i in range(len(flights_data)):
+        print(flights_data[i])
 
 
 
 if __name__ == '__main__':
-    # asyncio.run(main())
+    asyncio.run(main())
 
     # Пример использования генератора
-    flight_generator = get_flight_prices_generator("MOW", "LED", "2024-01-10")
-    for flight in flight_generator:
-        print(flight['origin_airport'], flight['destination_airport'], flight['departure_at'], flight['price'],
-              f"\n{flight['link']}")
-        print('-' * 20)
+    # flight_generator = get_flight_prices_generator("MOW", "LED", "2024-01-10")
+    # for flight in flight_generator:
+    #     print(flight['origin_airport'], flight['destination_airport'], flight['departure_at'], flight['price'],
+    #           f"\n{flight['link']}")
+    #     print('-' * 20)

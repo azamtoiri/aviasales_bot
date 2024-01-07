@@ -1,47 +1,103 @@
 from aiogram import Router, F
+from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardRemove
 
-from bot.keyboards.reply.airports_buttons import airports
-from bot.states.flight import FlightState
+from bot.states.flight import FlightForm
+from bot.utils.misc.utils import origin_codes
+from bot.utils.misc.validate import NoMatchCountryError, DateError, validate_country, validate_date
 
 router = Router()
 
 
+@router.message(Command('find_ticket'))
+async def fill_search_ticket(msg: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(FlightForm.origin)
+    await msg.answer(
+        'Введите страну отправления',
+        reply_markup=ReplyKeyboardRemove()
+    )
+
+
 @router.message(F.text == 'Посмотреть цены')
 async def fill_search_ticket(msg: Message, state: FSMContext):
-    await state.set_state(FlightState.origin)
-    await msg.answer('Выберите страну отравления', reply_markup=airports)
+    await state.clear()
+    await state.set_state(FlightForm.origin)
+    await msg.answer(
+        'Введите страну отправления',
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 
-@router.message(FlightState.origin)
+@router.message(FlightForm.origin)
 async def airport_origin(msg: Message, state: FSMContext):
-    await state.update_data(origin=msg.text)
-    await state.set_state(FlightState.destination)
-    await msg.answer('Выберите страну прибытия')
+    try:
+        origin_country = await validate_country(msg.text.casefold(), origin_codes)
+        await state.update_data(origin=origin_country)
+        await state.set_state(FlightForm.destination)
+        await msg.answer('Выберите страну прибытия')
+    except NoMatchCountryError as country_err:
+        await msg.answer(f"{str(country_err)}")
+    except Exception as e:
+        await msg.answer("".join(str(e)))
 
 
-@router.message(FlightState.destination)
+@router.message(FlightForm.destination)
 async def airport_destination(msg: Message, state: FSMContext):
-    await state.update_data(destination=msg.text)
-    await state.set_state(FlightState.depart_date)
-    await msg.answer('Выберите дату вылета', reply_markup=ReplyKeyboardRemove())
+    try:
+        destination_codes = origin_codes.copy()
+        destination_country = await validate_country(msg.text.casefold(), destination_codes)
+        await state.update_data(destination=destination_country)
+        await state.set_state(FlightForm.depart_date)
+        await msg.answer('Введите дату вылета в формате YYYY-MM-DD')
+    except NoMatchCountryError as country_err:
+        await msg.answer(f"{str(country_err)}")
+    except Exception as e:
+        await msg.answer("".join(str(e)))
 
 
-@router.message(FlightState.depart_date)
+@router.message(FlightForm.depart_date)
 async def show_tickets(msg: Message, state: FSMContext):
     from api.main import get_flight_prices
+    from bot.utils.misc.validate import readable_datetime, convert_minutes_to_hours_and_minutes
+    from bot.utils.misc.utils import reversed_origin_codes
+    try:
+        validate_date(msg.text)
+        await state.update_data(depart_date=msg.text)
+        data = await state.get_data()
+        print(data)
+        await state.clear()
 
-    await state.update_data(depart_date=msg.text)
-    data = await state.get_data()
-    await state.clear()
-    prices = await get_flight_prices(data.get('origin'), data.get('destination'), data.get('depart_date'))
-    print(prices)
+        prices = await get_flight_prices(data.get('origin'), data.get('destination'), data.get('depart_date'))
+        """All tickets prices"""
+        message = [
+            f"<b>С:</b> {reversed_origin_codes.get(price[0]).upper()}\n"
+            f"<b>В:</b> {reversed_origin_codes.get(price[1]).upper()}\n"
+            f"<b>Дата и время:</b> {readable_datetime(price[2])}\n"
+            f"<b>Price:</b> {price[3]}₽\n"
+            f"<b>Время полета:</b> {convert_minutes_to_hours_and_minutes(price[4])}\n"
+            f"<b>Рейс:</b> {price[5]} {price[6]}\n"
+            f"<a href='https://aviasales.ru{price[7]}'>Посмотреть на сайте </a>\n"
+            for price in prices
+        ]
 
-    formatted_text = []
-    [
-        formatted_text.append(f"{key}: {value}")
-        for key, value in data.items()
-    ]
-    await msg.answer("\n".join(formatted_text))
+        """One ticket price"""
+        cheapest_price = prices[0]
+        cheapest_price = [
+            f"<b> Самая выгодная цена! 🎲 </b>\n"
+            f"<b>С:</b> {reversed_origin_codes.get(cheapest_price[0]).upper()}\n"
+            f"<b>В:</b> {reversed_origin_codes.get(cheapest_price[1]).upper()}\n"
+            f"<b>Дата и время:</b> {readable_datetime(cheapest_price[2])}\n"
+            f"<b>Цена:</b> {cheapest_price[3]}₽\n"
+            f"<b>Время полета:</b> {convert_minutes_to_hours_and_minutes(cheapest_price[4])}\n"
+            f"<b>Рейс:</b> {cheapest_price[5]} {cheapest_price[6]}\n"
+            f"<a href='https://aviasales.ru{cheapest_price[7]}'>Посмотреть на сайте </a>\n"
+        ]
+
+        await msg.answer("\n".join(message))
+        await msg.answer("\n".join(cheapest_price))
+
+    except DateError as de:
+        await msg.answer("".join(str(de)))

@@ -3,7 +3,7 @@ from typing import Optional
 from aiogram.filters.state import StatesGroup, State
 
 
-class FlightState(StatesGroup):
+class FlightForm(StatesGroup):
     origin: str = State()
     destination: str = State()
     depart_date: str = State()
